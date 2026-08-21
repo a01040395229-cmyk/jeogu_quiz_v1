@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <style>html, body { background-color: #000 !important; }</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>화면 3 - 16:9 세로 운송 게임</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="game-container" id="gameContainer">
+      <!-- Background SVG -->
+      <div class="game-bg">
+        <img src="assets/background3.svg" alt="화면 3 배경" class="bg-img">
+      </div>
+
+      <!-- Question Prompt Graphic Overlay (Overlaid 100% over top card) -->
+      <img src="assets/question_prompt.svg" alt="질문 프롬프트 카드" class="question-prompt-overlay">
+
+      <!-- Pulse Effect & CO2 Top Pin Layer Stack -->
+      <div class="co2-pulse-box">
+        <img src="assets/blue circle2.svg" alt="blue circle 2" class="blue-circle-2">
+        <img src="assets/blue circle1.svg" alt="blue circle 1" class="blue-circle-1">
+        <img src="assets/map_co2.svg" alt="CO2 아이콘" class="co2-top-pin">
+      </div>
+    </div>
+  </div>
+
+  <script src="screen3.js"></script>
+</body>
+</html>

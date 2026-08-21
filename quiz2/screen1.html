@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <style>html, body { background-color: #000 !important; }</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>다크패턴 쇼핑몰 - 화면 1</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+      background: #111;
+      font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* 캔버스 고정 크기 - transform으로 스케일 */
+    #scene {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      transform-origin: center center;
+      flex-shrink: 0;
+    }
+    #bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+
+    #typing-wrap { position: absolute; top: 226.39px; left: 184.48px; right: 184.48px; text-align: center; z-index: 40; }
+    #typing-text { font-family: "Pretendard", sans-serif; font-weight: 600; font-size: 52px; line-height: 1.4; color: #0F1811; letter-spacing: -0.02em; white-space: pre-wrap; min-height: 2.8em; }
+    #cursor { display: inline-block; width: 3px; height: 1em; background: #0F1811; margin-left: 2px; vertical-align: middle; animation: blink 0.75s step-end infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    #icons-area { position: absolute; bottom: 0; left: 0; width: 1080px; height: 1920px; z-index: 10; pointer-events: none; }
+    .mall-icon { position: absolute; overflow: hidden; opacity: 0; }
+    .mall-icon img { width: 100%; height: 100%; display: block; }
+    #icon-shein  { width: 900px; height: 900px; left: 260px; border-radius: 168px; bottom: 880px; box-shadow: 0 28px 90px rgba(0,0,0,0.21); --rot: -13deg; }
+    #icon-ali    { width: 990px; height: 990px; left: -170px; border-radius: 190px; bottom: 150px; box-shadow: 0 28px 90px rgba(0,0,0,0.24); --rot:  9deg; }
+    #icon-temu   { width: 900px; height: 900px; left: 420px; border-radius: 168px; bottom:  70px; box-shadow: 0 28px 90px rgba(0,0,0,0.21); --rot: -6deg; }
+    @keyframes fallLand {
+      0%   { opacity: 0; transform: translateY(-1500px) rotate(calc(var(--rot) * -0.3)) scale(1.0); }
+      12%  { opacity: 1; }
+      45%  { transform: translateY(40px)  rotate(calc(var(--rot) * 0.6)) scale(0.93, 1.07); } /* 착지 찌그러짐 */
+      65%  { transform: translateY(-60px) rotate(calc(var(--rot) * 1.15)) scale(1.03, 0.97); } /* 1회 반동 */
+      100% { opacity: 1; transform: translateY(0) rotate(var(--rot)) scale(1); }
+    }
+    .mall-icon.landing { animation: fallLand 0.75s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
+
+    /* ── 타이핑 텍스트 페이드아웃 ── */
+    #typing-wrap { transition: opacity 0.4s ease; }
+    #typing-wrap.fade-out { opacity: 0; pointer-events: none; }
+
+    /* ── 캐러셀 (screen 2) ── */
+    #carousel-wrap {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 1080px;
+      overflow: hidden;
+      z-index: 30;
+      display: none;
+      transform: translateY(-50%);
+    }
+    .carousel-track {
+      display: flex;
+      width: max-content;
+    }
+    .carousel-item {
+      width: 540px;
+      height: 540px;
+      margin-right: 90px;
+      flex-shrink: 0;
+    }
+    .carousel-item img { width: 100%; height: 100%; object-fit: contain; }
+    @keyframes scrollLeft {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(calc(-5 * (540px + 90px))); }
+    }
+    .carousel-track.running { animation: scrollLeft 10s linear infinite; }
+
+    /* ── 퀴즈 카드 (screen 2) ── */
+    #quiz-card {
+      position: absolute;
+      top: 109.31px;
+      left: 90.64px;
+      width: 907px;
+      z-index: 45;
+      display: none;
+      opacity: 0;
+    }
+    @keyframes cardDrop {
+      0%   { opacity: 0; transform: translateY(-450px) scale(0.95); }
+      55%  { opacity: 1; transform: translateY(18px) scale(1.02); }
+      72%  { transform: translateY(-8px) scale(0.99); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+<div id="scene">
+  <img id="bg" src="asset/sky.svg" alt="sky background" />
+
+  <div id="typing-wrap">
+    <p id="typing-text"><span id="cursor"></span></p>
+  </div>
+  <!-- 그라디언트 오버레이: 아이콘 위, 텍스트 아래 -->
+  <img id="mall-gradient" src="asset/shopping_mall_icon_gradient.svg"
+       style="position:absolute; inset:0; width:1080px; height:1920px; z-index:20; pointer-events:none;" />
+  <div id="icons-area">
+    <div class="mall-icon" id="icon-shein"><img src="asset/shein.svg" alt="SHEIN" /></div>
+    <div class="mall-icon" id="icon-ali"><img src="asset/aliexpress.svg" alt="AliExpress" /></div>
+    <div class="mall-icon" id="icon-temu"><img src="asset/temu.svg" alt="Temu" /></div>
+  </div>
+
+  <!-- ── 캐러셀 (screen 2) ── -->
+  <div id="carousel-wrap">
+    <div class="carousel-track" id="carousel-track">
+      <div class="carousel-item"><img src="asset/icon_timer.svg"    alt="timer"    /></div>
+      <div class="carousel-item"><img src="asset/icon_scissors.svg" alt="scissors" /></div>
+      <div class="carousel-item"><img src="asset/icon_gift.svg"     alt="gift"     /></div>
+      <div class="carousel-item"><img src="asset/icon_discount.svg" alt="discount" /></div>
+      <div class="carousel-item"><img src="asset/icon_cart.svg"     alt="cart"     /></div>
+      <!-- 무한 루프용 복제 -->
+      <div class="carousel-item"><img src="asset/icon_timer.svg"    alt="timer"    /></div>
+      <div class="carousel-item"><img src="asset/icon_scissors.svg" alt="scissors" /></div>
+      <div class="carousel-item"><img src="asset/icon_gift.svg"     alt="gift"     /></div>
+      <div class="carousel-item"><img src="asset/icon_discount.svg" alt="discount" /></div>
+      <div class="carousel-item"><img src="asset/icon_cart.svg"     alt="cart"     /></div>
+    </div>
+  </div>
+
+  <!-- ── 퀴즈 카드 (screen 2) ── -->
+  <img id="quiz-card" src="asset/quiz_question_2.svg" alt="퀴즈 문제" />
+
+</div>
+<script>
+  /* 세그먼트별 폰트 굵기 지정
+     weight: 600 = SemiBold, 800 = ExtraBold */
+  const segments = [
+    { text: '여기는 다크패턴을 자주 사용하는', weight: 600 },
+    { text: '\n',                              weight: 600 },
+    { text: '주요 저가 온라인 쇼핑몰',          weight: 800 },
+    { text: '이에요',                           weight: 600 },
+  ];
+
+  // 세그먼트를 (char, weight) 배열로 평탄화
+  const chars = [];
+  segments.forEach(seg => {
+    for (const ch of seg.text) chars.push({ ch, weight: seg.weight });
+  });
+
+  const CHAR_INTERVAL = 60; // ms per char (타이핑 속도)
+  const typingDurationMs = chars.length * CHAR_INTERVAL; // 총 타이핑 소요 시간
+
+  /* ── 인트로 오디오 ── */
+  const introAudio = new Audio('sound/voiceover/screen1_intro.mp3');
+  introAudio.preload = 'auto';
+
+  // 메타데이터 로드 후 길이 비교 → 필요 시 재생속도 조정
+  introAudio.addEventListener('loadedmetadata', () => {
+    const audioDurationMs = introAudio.duration * 1000;
+    if (audioDurationMs > typingDurationMs) {
+      introAudio.playbackRate = audioDurationMs / typingDurationMs;
+    }
+  });
+
+  function startIntroAudio() {
+    introAudio.play().catch(() => {}); // 자동재생 차단 시 무시
+  }
+
+  function stopIntroAudio() {
+    introAudio.pause();
+    introAudio.currentTime = 0;
+  }
+
+  const textEl   = document.getElementById('typing-text');
+  const cursorEl = document.getElementById('cursor');
+  let charIndex     = 0;
+  let typingSkipped = false; // 클릭 스킵 여부
+
+  /* 나머지 글자를 한 번에 출력하는 스킵 함수 */
+  function skipTyping() {
+    if (charIndex >= chars.length) return; // 이미 완료
+    typingSkipped = true;
+
+    // 남은 글자 전부 즉시 렌더
+    while (charIndex < chars.length) {
+      const { ch, weight } = chars[charIndex++];
+      if (ch === '\n') {
+        textEl.insertBefore(document.createElement('br'), cursorEl);
+      } else {
+        const span = document.createElement('span');
+        span.textContent = ch;
+        span.style.fontWeight = weight;
+        span.style.opacity = '1'; // 즉시 표시
+        textEl.insertBefore(span, cursorEl);
+      }
+    }
+    stopIntroAudio();
+    cursorEl.style.animation = 'none';
+    cursorEl.style.opacity   = '0';
+    screenPhase = 1; // 다음 탭 → screen2
+  }
+
+  function typeNext() {
+    if (typingSkipped) return; // 스킵됐으면 체인 종료
+    if (charIndex >= chars.length) {
+      stopIntroAudio(); // 타이핑 완료 → 오디오 정지
+      screenPhase = 1;  // 다음 탭 → screen2
+      setTimeout(() => { cursorEl.style.animation = 'none'; cursorEl.style.opacity = '0'; }, 1500);
+      return;
+    }
+    const { ch, weight } = chars[charIndex++];
+    if (ch === '\n') {
+      textEl.insertBefore(document.createElement('br'), cursorEl);
+    } else {
+      const span = document.createElement('span');
+      span.textContent = ch;
+      span.style.fontWeight = weight;
+      span.style.opacity = '0';
+      span.style.transition = 'opacity 0.05s';
+      textEl.insertBefore(span, cursorEl);
+      requestAnimationFrame(() => { span.style.opacity = '1'; });
+    }
+    setTimeout(typeNext, CHAR_INTERVAL);
+  }
+
+  // ── 화면 단계 관리 ──
+  // 0: 타이핑 진행 중  1: 타이핑 완료 대기  2: screen2 진입
+  let screenPhase = 0;
+
+  /* ── screen2 진입 함수 ── */
+  function enterScreen2() {
+    screenPhase = 2;
+
+    // 타이핑 텍스트 페이드아웃
+    document.getElementById('typing-wrap').classList.add('fade-out');
+
+    // 캐러셀 즉시 표시 + 스크롤 시작
+    const carouselWrap  = document.getElementById('carousel-wrap');
+    const carouselTrack = document.getElementById('carousel-track');
+    carouselWrap.style.display = 'block';
+    // 한 프레임 후 애니메이션 클래스 부착 (레이아웃 확정 후)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { carouselTrack.classList.add('running'); });
+    });
+
+    // 400ms 후 퀴즈 카드 드롭인 + 보이스오버 재생
+    const quizCard    = document.getElementById('quiz-card');
+    const questionAudio = new Audio('sound/voiceover/screen2_question.mp3');
+    questionAudio.playbackRate = introAudio.playbackRate;
+    setTimeout(() => {
+      quizCard.style.display = 'block';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          quizCard.style.animation = 'cardDrop 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards';
+        });
+      });
+      questionAudio.play().catch(() => {});
+    }, 400);
+  }
+
+  /* ── 통합 클릭 핸들러 ── */
+  const clickSfx = new Audio('sound/click_sfx.mp3');
+  clickSfx.preload = 'auto';
+
+  const handleSceneClick = (e) => {
+    if (e && e.type === 'touchend') e.preventDefault();
+    // 효과음은 항상 재생
+    clickSfx.currentTime = 0;
+    clickSfx.play().catch(() => {});
+
+    if (screenPhase === 0 && charIndex > 0 && charIndex < chars.length) {
+      skipTyping();           // 타이핑 스킵
+    } else if (screenPhase === 1) {
+      enterScreen2();         // screen2 전환
+    } else if (screenPhase === 2) {
+      window.location.href = 'screen2.html'; // screen2.html로 완전히 이동
+    }
+  };
+
+  const sceneEl = document.getElementById('scene');
+  sceneEl.addEventListener('click', handleSceneClick);
+  sceneEl.addEventListener('touchend', handleSceneClick);
+
+  const drops = [
+    { id: 'icon-temu',  delay: 150 },
+    { id: 'icon-ali',   delay: 300 },
+    { id: 'icon-shein', delay: 450 },
+  ];
+
+  function dropIcon(id, delay) {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.classList.add('landing');
+      }));
+    }, delay);
+  }
+
+  /* ── 데스크탑 스케일링: 뷰포트에 맞게 9:16 비율 유지 ── */
+  const CANVAS_W = 1080, CANVAS_H = 1920;
+  const scene = document.getElementById('scene');
+
+  function fitScene() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const scale = Math.min(vw / CANVAS_W, vh / CANVAS_H);
+    scene.style.transform = `scale(${scale})`;
+  }
+
+  window.addEventListener('resize', fitScene);
+  fitScene(); // 즉시 적용
+
+  window.addEventListener('load', () => {
+    fitScene();
+    setTimeout(() => {
+      startIntroAudio(); // 타이핑과 동시에 인트로 재생
+      typeNext();
+    }, 400);
+    drops.forEach(d => dropIcon(d.id, d.delay));
+  });
+</script>
+
+<!-- GLOBAL BACK BUTTON & POPUP -->
+<script>
+(function() {
+    function initBackBtn() {
+        if (document.getElementById('globalBackBtnContainer')) return; // already injected
+
+        const container = document.querySelector('.game-container') || 
+                          document.querySelector('.screen-container') || 
+                          document.querySelector('#scene') || 
+                          document.body;
+
+        const backBtnContainer = document.createElement('div');
+        backBtnContainer.id = 'globalBackBtnContainer';
+        backBtnContainer.style.cssText = 'position: absolute; top: 40px; left: 40px; z-index: 9999;';
+        
+        const backBtn = document.createElement('img');
+        backBtn.src = '../back_assets/bt-back.svg';
+        backBtn.alt = '뒤로가기';
+        backBtn.style.cssText = 'width: 131px; height: 132px; cursor: pointer; pointer-events: auto;';
+        backBtnContainer.appendChild(backBtn);
+
+        const popupOverlay = document.createElement('div');
+        popupOverlay.id = 'globalBackPopup';
+        popupOverlay.style.cssText = 'position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; background: rgba(0, 0, 0, 0.6); z-index: 10000; display: none; justify-content: center; align-items: center; pointer-events: auto;';
+
+        const popupContent = document.createElement('div');
+        popupContent.style.cssText = 'position: relative; display: flex; justify-content: center; align-items: center;';
+        
+        const popupBg = document.createElement('img');
+        popupBg.src = '../back_assets/view-main.svg';
+        popupBg.alt = '메인 팝업';
+        popupBg.style.cssText = 'width: 799px; height: 863px;';
+        
+        const popupButtons = document.createElement('div');
+        popupButtons.style.cssText = 'position: absolute; display: flex; flex-direction: column; align-items: center; top: 76%; transform: translateY(-50%);';
+        
+        const mainBtn = document.createElement('img');
+        mainBtn.src = '../back_assets/view-main-bt.svg';
+        mainBtn.alt = '메인화면으로';
+        mainBtn.style.cssText = 'width: 553px; height: 119px; cursor: pointer; margin-top: -40px; margin-bottom: 60px; pointer-events: auto;';
+        
+        const closeText = document.createElement('div');
+        closeText.textContent = '닫기';
+        closeText.style.cssText = 'color: #35D047; font-size: 50px; font-weight: bold; cursor: pointer; text-align: center; padding: 10px; pointer-events: auto;';
+
+        popupButtons.appendChild(mainBtn);
+        popupButtons.appendChild(closeText);
+        popupContent.appendChild(popupBg);
+        popupContent.appendChild(popupButtons);
+        popupOverlay.appendChild(popupContent);
+        
+        container.appendChild(backBtnContainer);
+        container.appendChild(popupOverlay);
+
+        const applyFeedback = (el) => {
+            el.style.transition = 'transform 0.1s, opacity 0.1s';
+            const press = () => { el.style.transform = 'scale(0.90)'; el.style.opacity = '0.6'; };
+            const release = () => { el.style.transform = 'scale(1)'; el.style.opacity = '1'; };
+            el.addEventListener('touchstart', press, {passive: true});
+            el.addEventListener('touchend', release);
+            el.addEventListener('mousedown', press);
+            el.addEventListener('mouseup', release);
+            el.addEventListener('mouseleave', release);
+        };
+        applyFeedback(backBtn);
+        applyFeedback(mainBtn);
+        applyFeedback(closeText);
+
+        const handleTouch = (e, callback) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Restore visual state immediately in case touchend didn't fire due to navigation/display change
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.opacity = '1';
+            callback();
+        };
+
+        const openPopup = () => { 
+            if (backBtnContainer.style.display !== 'none') {
+                popupOverlay.style.display = 'flex'; 
+            }
+        };
+        const closePopup = () => { popupOverlay.style.display = 'none'; };
+        const goMain = () => { 
+            localStorage.removeItem('quiz1_solved_answers');
+            window.location.href = '../index.html'; 
+        };
+
+        backBtn.addEventListener('touchend', (e) => handleTouch(e, openPopup));
+        backBtn.addEventListener('click', (e) => handleTouch(e, openPopup));
+        
+        closeText.addEventListener('touchend', (e) => handleTouch(e, closePopup));
+        closeText.addEventListener('click', (e) => handleTouch(e, closePopup));
+        
+        mainBtn.addEventListener('touchend', (e) => handleTouch(e, goMain));
+        mainBtn.addEventListener('click', (e) => handleTouch(e, goMain));
+
+        // --- HIDE CONDITIONS LOGIC ---
+        const currentPath = window.location.pathname;
+        const isScene1 = currentPath.includes('road/scene1.html');
+        const isScene2 = currentPath.includes('road/scene2.html');
+        const isQuiz2Screen1 = currentPath.includes('quiz2/screen1.html');
+
+                const updateVisibility = () => {
+            let isVisible = true;
+            
+            if (isScene1) {
+                const signBubble = document.getElementById('signBubble');
+                const background = document.querySelector('.background');
+                const hasStarted = (signBubble && signBubble.style.display === 'block') || 
+                                   (background && background.classList.contains('hide-logo'));
+                                   
+                const bigJeogu1 = document.getElementById('bigJeogu1');
+                const bigJeogu2 = document.getElementById('bigJeogu2');
+                const quizScreen = document.getElementById('quizScreen');
+                const hasEnded = (bigJeogu1 && bigJeogu1.style.display === 'block') || 
+                                 (bigJeogu2 && bigJeogu2.style.display === 'block') ||
+                                 (quizScreen && quizScreen.classList.contains('active'));
+                                 
+                if (!hasStarted || hasEnded) {
+                    isVisible = false;
+                }
+            } else if (isScene2) {
+                const bigJeogu1 = document.getElementById('bigJeogu1');
+                const bigJeogu2 = document.getElementById('bigJeogu2');
+                const quizScreen = document.getElementById('quizScreen');
+                const hasEnded = (bigJeogu1 && bigJeogu1.style.display === 'block') || 
+                                 (bigJeogu2 && bigJeogu2.style.display === 'block') ||
+                                 (quizScreen && quizScreen.classList.contains('active'));
+                
+                if (hasEnded) {
+                    isVisible = false;
+                }
+            } else if (isQuiz2Screen1) {
+                const quizCard = document.getElementById('quiz-card');
+                if (quizCard && quizCard.style.display === 'block') {
+                    isVisible = false;
+                }
+            }
+            
+            backBtnContainer.style.display = isVisible ? 'block' : 'none';
+        };
+
+        updateVisibility();
+
+        if (isScene1 || isScene2 || isQuiz2Screen1) {
+            const observer = new MutationObserver(() => {
+                updateVisibility();
+            });
+            const config = { attributes: true, attributeFilter: ['style', 'class'] };
+            
+            if (isScene1) {
+                const els = [document.getElementById('signBubble'), document.querySelector('.background'), document.getElementById('bigJeogu1'), document.getElementById('bigJeogu2'), document.getElementById('quizScreen')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            } else if (isScene2) {
+                const els = [document.getElementById('bigJeogu1'), document.getElementById('bigJeogu2'), document.getElementById('quizScreen')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            } else if (isQuiz2Screen1) {
+                const els = [document.getElementById('quiz-card')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            }
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBackBtn);
+    } else {
+        initBackBtn();
+    }
+})();
+</script>
+
+</body>
+</html>

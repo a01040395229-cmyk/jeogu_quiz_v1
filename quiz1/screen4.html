@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <style>html, body { background-color: #000 !important; }</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>화면 4 - 퀴즈 1 (도로운송)</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="game-container" id="gameContainer">
+      <!-- 1. Layer 1: Background Sky (background sky.svg) -->
+      <div class="game-bg">
+        <img src="assets/background sky.svg" alt="하늘 배경" class="bg-img">
+      </div>
+
+      <!-- 2. Layer 2: Animated Clouds Group (clouds group .svg - 2.5x Enlarged, Bottom half hidden behind ground4) -->
+      <div class="animated-clouds-group-wrapper">
+        <img src="assets/clouds group .svg" alt="구름 그룹" class="clouds-group-img">
+      </div>
+
+      <!-- 3. Layer 3: Sky Gradation (sky gradation.svg - Rotated 180deg so transparent faces UP, flush against ground4 top edge) -->
+      <div class="sky-gradation-wrapper">
+        <img src="assets/sky gradation.svg" alt="하늘 그라데이션" class="sky-gradation-img">
+      </div>
+
+      <!-- 4. Layer 4: Title & Quiz Button Group (quiz bt textGroup.svg) -->
+      <div class="top-title-wrapper">
+        <img src="assets/quiz bt textGroup.svg" alt="Quiz 1 운송방식에 알맞은 이산화탄소 배출량을 골라주세요" class="title-textgroup-img">
+      </div>
+
+      <!-- 5. Layer 5: Ground4 Layer (ground4.svg - Green ground & Question banner) -->
+      <div class="ground-wrapper">
+        <img src="assets/ground4.svg" alt="지면 및 질문 카드" class="ground-img">
+      </div>
+
+      <!-- 6. Layer 6: Moving Truck (road_truck.svg - Sitting flush on top edge of ground4.svg) & 4 CO2 Exhaust Puffs -->
+      <div class="animated-truck-wrapper">
+        <div class="truck-box">
+          <!-- 4 CO2 Exhaust Emission Puffs -->
+          <div class="co2-exhaust-container">
+            <img src="assets/co2_emissions.svg" class="co2-puff puff-1" alt="CO2 배출 1">
+            <img src="assets/co2_emissions.svg" class="co2-puff puff-2" alt="CO2 배출 2">
+            <img src="assets/co2_emissions.svg" class="co2-puff puff-3" alt="CO2 배출 3">
+            <img src="assets/co2_emissions.svg" class="co2-puff puff-4" alt="CO2 배출 4">
+          </div>
+          <!-- Road Truck Vehicle SVG -->
+          <img src="assets/road_truck.svg" class="truck-img" alt="도로 운송 트럭">
+        </div>
+      </div>
+
+      <!-- 7. Layer 7: 4 Transportation Choice Buttons Grid (On top of ground4.svg) -->
+      <div class="screen4-options-grid">
+        <button type="button" class="option-btn" data-answer="person" aria-label="사람">
+          <img src="assets/road_person.svg" alt="사람">
+        </button>
+        <button type="button" class="option-btn" data-answer="boar" aria-label="멧돼지">
+          <img src="assets/road_boar.svg" alt="멧돼지">
+        </button>
+        <button type="button" class="option-btn" data-answer="horse" aria-label="말 (정답)">
+          <img src="assets/road_horse.svg" alt="말">
+        </button>
+        <button type="button" class="option-btn" data-answer="rhino" aria-label="코뿔소">
+          <img src="assets/road_rhino.svg" alt="코뿔소">
+        </button>
+      </div>
+
+      <!-- 8. Layer 8: Result Popup Container Overlay (Initially Hidden) -->
+      <div class="popup-overlay-wrapper hidden" id="popupWrapper">
+        <div class="popup-content" id="popupContent">
+          <img id="popupImg" src="assets/rail_correct_popup_jeogu_o.svg" alt="결과 팝업">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="screen4.js"></script>
+
+<!-- GLOBAL BACK BUTTON & POPUP -->
+<script>
+(function() {
+    function initBackBtn() {
+        if (document.getElementById('globalBackBtnContainer')) return; // already injected
+
+        const container = document.querySelector('.game-container') || 
+                          document.querySelector('.screen-container') || 
+                          document.querySelector('#scene') || 
+                          document.body;
+
+        const backBtnContainer = document.createElement('div');
+        backBtnContainer.id = 'globalBackBtnContainer';
+        backBtnContainer.style.cssText = 'position: absolute; top: 40px; left: 40px; z-index: 9999;';
+        
+        const backBtn = document.createElement('img');
+        backBtn.src = '../back_assets/bt-back.svg';
+        backBtn.alt = '뒤로가기';
+        backBtn.style.cssText = 'width: 131px; height: 132px; cursor: pointer; pointer-events: auto;';
+        backBtnContainer.appendChild(backBtn);
+
+        const popupOverlay = document.createElement('div');
+        popupOverlay.id = 'globalBackPopup';
+        popupOverlay.style.cssText = 'position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; background: rgba(0, 0, 0, 0.6); z-index: 10000; display: none; justify-content: center; align-items: center; pointer-events: auto;';
+
+        const popupContent = document.createElement('div');
+        popupContent.style.cssText = 'position: relative; display: flex; justify-content: center; align-items: center;';
+        
+        const popupBg = document.createElement('img');
+        popupBg.src = '../back_assets/view-main.svg';
+        popupBg.alt = '메인 팝업';
+        popupBg.style.cssText = 'width: 799px; height: 863px;';
+        
+        const popupButtons = document.createElement('div');
+        popupButtons.style.cssText = 'position: absolute; display: flex; flex-direction: column; align-items: center; top: 76%; transform: translateY(-50%);';
+        
+        const mainBtn = document.createElement('img');
+        mainBtn.src = '../back_assets/view-main-bt.svg';
+        mainBtn.alt = '메인화면으로';
+        mainBtn.style.cssText = 'width: 553px; height: 119px; cursor: pointer; margin-top: -40px; margin-bottom: 60px; pointer-events: auto;';
+        
+        const closeText = document.createElement('div');
+        closeText.textContent = '닫기';
+        closeText.style.cssText = 'color: #35D047; font-size: 50px; font-weight: bold; cursor: pointer; text-align: center; padding: 10px; pointer-events: auto;';
+
+        popupButtons.appendChild(mainBtn);
+        popupButtons.appendChild(closeText);
+        popupContent.appendChild(popupBg);
+        popupContent.appendChild(popupButtons);
+        popupOverlay.appendChild(popupContent);
+        
+        container.appendChild(backBtnContainer);
+        container.appendChild(popupOverlay);
+
+        const applyFeedback = (el) => {
+            el.style.transition = 'transform 0.1s, opacity 0.1s';
+            const press = () => { el.style.transform = 'scale(0.90)'; el.style.opacity = '0.6'; };
+            const release = () => { el.style.transform = 'scale(1)'; el.style.opacity = '1'; };
+            el.addEventListener('touchstart', press, {passive: true});
+            el.addEventListener('touchend', release);
+            el.addEventListener('mousedown', press);
+            el.addEventListener('mouseup', release);
+            el.addEventListener('mouseleave', release);
+        };
+        applyFeedback(backBtn);
+        applyFeedback(mainBtn);
+        applyFeedback(closeText);
+
+        const handleTouch = (e, callback) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Restore visual state immediately in case touchend didn't fire due to navigation/display change
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.opacity = '1';
+            callback();
+        };
+
+        const openPopup = () => { 
+            if (backBtnContainer.style.display !== 'none') {
+                popupOverlay.style.display = 'flex'; 
+            }
+        };
+        const closePopup = () => { popupOverlay.style.display = 'none'; };
+        const goMain = () => { 
+            localStorage.removeItem('quiz1_solved_answers');
+            window.location.href = '../index.html'; 
+        };
+
+        backBtn.addEventListener('touchend', (e) => handleTouch(e, openPopup));
+        backBtn.addEventListener('click', (e) => handleTouch(e, openPopup));
+        
+        closeText.addEventListener('touchend', (e) => handleTouch(e, closePopup));
+        closeText.addEventListener('click', (e) => handleTouch(e, closePopup));
+        
+        mainBtn.addEventListener('touchend', (e) => handleTouch(e, goMain));
+        mainBtn.addEventListener('click', (e) => handleTouch(e, goMain));
+
+        // --- HIDE CONDITIONS LOGIC ---
+        const currentPath = window.location.pathname;
+        const isScene1 = currentPath.includes('road/scene1.html');
+        const isScene2 = currentPath.includes('road/scene2.html');
+        const isQuiz2Screen1 = currentPath.includes('quiz2/screen1.html');
+
+                const updateVisibility = () => {
+            let isVisible = true;
+            
+            if (isScene1) {
+                const signBubble = document.getElementById('signBubble');
+                const background = document.querySelector('.background');
+                const hasStarted = (signBubble && signBubble.style.display === 'block') || 
+                                   (background && background.classList.contains('hide-logo'));
+                                   
+                const bigJeogu1 = document.getElementById('bigJeogu1');
+                const bigJeogu2 = document.getElementById('bigJeogu2');
+                const quizScreen = document.getElementById('quizScreen');
+                const hasEnded = (bigJeogu1 && bigJeogu1.style.display === 'block') || 
+                                 (bigJeogu2 && bigJeogu2.style.display === 'block') ||
+                                 (quizScreen && quizScreen.classList.contains('active'));
+                                 
+                if (!hasStarted || hasEnded) {
+                    isVisible = false;
+                }
+            } else if (isScene2) {
+                const bigJeogu1 = document.getElementById('bigJeogu1');
+                const bigJeogu2 = document.getElementById('bigJeogu2');
+                const quizScreen = document.getElementById('quizScreen');
+                const hasEnded = (bigJeogu1 && bigJeogu1.style.display === 'block') || 
+                                 (bigJeogu2 && bigJeogu2.style.display === 'block') ||
+                                 (quizScreen && quizScreen.classList.contains('active'));
+                
+                if (hasEnded) {
+                    isVisible = false;
+                }
+            } else if (isQuiz2Screen1) {
+                const quizCard = document.getElementById('quiz-card');
+                if (quizCard && quizCard.style.display === 'block') {
+                    isVisible = false;
+                }
+            }
+            
+            backBtnContainer.style.display = isVisible ? 'block' : 'none';
+        };
+
+        updateVisibility();
+
+        if (isScene1 || isScene2 || isQuiz2Screen1) {
+            const observer = new MutationObserver(() => {
+                updateVisibility();
+            });
+            const config = { attributes: true, attributeFilter: ['style', 'class'] };
+            
+            if (isScene1) {
+                const els = [document.getElementById('signBubble'), document.querySelector('.background'), document.getElementById('bigJeogu1'), document.getElementById('bigJeogu2'), document.getElementById('quizScreen')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            } else if (isScene2) {
+                const els = [document.getElementById('bigJeogu1'), document.getElementById('bigJeogu2'), document.getElementById('quizScreen')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            } else if (isQuiz2Screen1) {
+                const els = [document.getElementById('quiz-card')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            }
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBackBtn);
+    } else {
+        initBackBtn();
+    }
+})();
+</script>
+
+</body>
+</html>

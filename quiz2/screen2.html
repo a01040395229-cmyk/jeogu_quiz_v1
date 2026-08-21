@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <style>html, body { background-color: #000 !important; }</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>다크패턴 쇼핑몰 - 화면 2</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+      background: #111;
+      font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #scene {
+      position: relative;
+      width: 1080px; height: 1920px;
+      overflow: hidden;
+      transform-origin: center center;
+      flex-shrink: 0;
+      background: #fff;
+    }
+    /* 고정 영역: quiz_header(1080x447) + progress_bar */
+    #fixed-zone {
+      position: absolute;
+      top: 0; left: 0;
+      width: 1080px; height: 447px;
+      z-index: 100;
+      pointer-events: none;
+    }
+    #quiz-header {
+      position: absolute;
+      top: 0; left: 0;
+      width: 1080px; height: 447px;
+    }
+    /* progress_bar_0: X:86.2 Y:386.93 */
+    #progress-bar {
+      position: absolute;
+      top: 386.93px; left: 86.2px;
+      width: 908px; height: 13px;
+    }
+    /* 스크롤 영역: 마키 배너(143px) 아래부터 = 446.47 + 143 = 589.47px */
+    #scroll-zone {
+      position: absolute;
+      top: 589.47px; left: 0;
+      width: 1080px;
+      height: 1330.53px; /* 1920 - 589.47 */
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    /* 커스텀 스크롤바: 마키 배너 영역 제외 */
+    #scroll-zone::-webkit-scrollbar {
+      width: 12px;
+    }
+    #scroll-zone::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #scroll-zone::-webkit-scrollbar-thumb {
+      background: #797979;
+      border-radius: 4px;
+    }
+    #scroll-zone::-webkit-scrollbar-thumb:hover {
+      background: #5a5a5a;
+    }
+    #scroll-content {
+      position: relative;
+      width: 1080px;
+      height: 2907.55px; /* shopping-mall의 bottom: -143px + 3050.55px = 2907.55px 에 딱 맞춤 */
+    }
+    /* shopping_mall: 캔버스 Y:446.47에 시작하는 이미지
+       scroll-zone이 589.47에서 시작하므로
+       scroll-content 내 top = 446.47 - 589.47 = -143px
+       (마키 배너 뒤에 가려진 영역) */
+    #shopping-mall {
+      position: absolute;
+      top: -143px; left: 0;
+      width: 1080px; height: 3050.55px;
+    }
+    /* shopping_mall_large_banner: 캔버스 Y:778.19
+       scroll-content 내 top = 778.19 - 589.47 = 188.72px */
+    #large-banner {
+      position: absolute;
+      top: 188.72px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1013px;
+      height: 392px;
+      z-index: 10;
+    }
+    /* discount_deal: 캔버스 X:758.67 Y:1868.87
+       scroll-content top = 1868.87 - 589.47 = 1279.4px */
+    #discount-deal {
+      position: absolute;
+      top: 1279.4px;
+      left: 758.67px;
+      width: 274px;
+      height: 274px;
+      z-index: 30; /* discount_timer(z-index:20)보다 항상 위에 표시 */
+      animation: floatBob 2.4s ease-in-out infinite;
+      transform-origin: center center;
+    }
+    @keyframes floatBob {
+      0%   { transform: translateY(0px) rotate(0deg); }
+      30%  { transform: translateY(-18px) rotate(2deg); }
+      60%  { transform: translateY(-10px) rotate(-1.5deg); }
+      100% { transform: translateY(0px) rotate(0deg); }
+    }
+    /* sold_out_soon 래퍼 */
+    #sold-out-wrapper {
+      position: absolute;
+      top: 1827.03px;
+      left: 58.19px;
+      width: 359px;
+      height: 93px;
+      z-index: 20;
+      transform-origin: center center;
+    }
+    /* 콩닥콩닥 심장박동 애니메이션 */
+    @keyframes heartbeat {
+      0%   { transform: scale(1); }
+      15%  { transform: scale(1.10); }  /* 첫 박동 */
+      28%  { transform: scale(0.96); } /* 잌간 수쳕 */
+      42%  { transform: scale(1.06); } /* 두번째 박동 */
+      60%  { transform: scale(1); }    /* 원위 복귀 */
+      100% { transform: scale(1); }
+    }
+    #sold-out-wrapper.pulse {
+      animation: heartbeat 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+    }
+    #sold-out-soon {
+      position: absolute;
+      top: 0; left: 0;
+      width: 359px;
+      height: 93px;
+    }
+    /* 'n개 남음' 텍스트: SVG 안 오른쪽 빈 공간(x≈190~355) 중앙 */
+    #countdown-text {
+      position: absolute;
+      left: 185px;
+      top: 50%;
+      transform: translateY(calc(-50% - 2px));
+      font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+      font-weight: 400;
+      font-size: 41.89px;
+      color: #0F1811;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    /* discount_timer 래퍼 */
+    #timer-wrapper {
+      position: absolute;
+      top: 1773.4px;
+      left: 574.14px;
+      width: 308px;
+      height: 146px;
+      z-index: 20;
+    }
+    #discount-timer {
+      position: absolute;
+      top: 0; left: 0;
+      width: 308px;
+      height: 146px;
+    }
+    /* 초록 박스 위 숫자 오버레이
+       박스: x=15.18, x=112.49, x=209.81 / y=67.81 / w=79.60 / h=59.70 */
+    .timer-digit {
+      position: absolute;
+      top: 67.81px;
+      height: 59.70px;
+      width: 79.60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Pretendard", "Apple SD Gothic Neo", sans-serif;
+      font-weight: 700;  /* Bold */
+      font-size: 41.89px;
+      color: #0F1811;
+      line-height: 1;
+    }
+    #timer-min { left: 15.18px; }
+    #timer-sec { left: 112.49px; }
+    #timer-cs  { left: 209.81px; }
+    /* 마키 배너: scroll-zone 밖, 절대 고정 레이어 */
+    #marquee-wrapper {
+      position: absolute;
+      top: 446.47px; left: 0;
+      width: 1080px; height: 143px;
+      overflow: hidden;
+      z-index: 50;
+      cursor: pointer; /* 클릭 가능 */
+    }
+    #marquee-track {
+      display: flex;
+      width: max-content;
+      height: 143px;
+      animation: marqueeScroll 12s linear infinite;
+    }
+    #marquee-track img {
+      width: 1717px; height: 143px;
+      flex-shrink: 0;
+      display: block;
+      margin-right: -12px;
+    }
+    @keyframes marqueeScroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-1705px); }
+    }
+
+    /* 클릭 가능한 다크패턴 요소 및 터치/클릭 프레스 모션 */
+    #timer-wrapper, #discount-deal, #sold-out-wrapper, #large-banner, #marquee-wrapper {
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.08s cubic-bezier(0.4, 0, 0.2, 1), filter 0.08s ease;
+    }
+    #large-banner:not(.solved):active {
+      transform: translateX(-50%) scale(0.97);
+      filter: brightness(0.96);
+    }
+    #discount-deal:not(.solved):active {
+      transform: scale(0.93) !important;
+      filter: brightness(0.95);
+    }
+    #sold-out-wrapper:not(.solved):active {
+      transform: scale(0.95);
+      filter: brightness(0.96);
+    }
+    #timer-wrapper:not(.solved):active {
+      transform: scale(0.95);
+      filter: brightness(0.96);
+    }
+    #marquee-wrapper:not(.solved):active {
+      transform: scale(0.985);
+      filter: brightness(0.96);
+    }
+
+    /* 오버레이: #0F1811 70% */
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: -2px;
+      width: calc(100% + 4px);
+      height: 100%;
+      background: rgba(15, 24, 17, 0.7);
+      z-index: 200;
+      display: none;
+      cursor: pointer;
+    }
+
+    /* 팝업 등장 애니메이션 */
+    @keyframes popupSlideUp {
+      0%   { transform: translate(-50%, 100%); opacity: 0; }
+      100% { transform: translate(-50%, 0); opacity: 1; }
+    }
+
+    /* 원형 아이콘 뽀잉 (탄력 팝인) 애니메이션 - GPU 가속 및 부드러운 스케일링 */
+    @keyframes bboingPop {
+      0% {
+        transform: translate3d(-50%, 0, 0) scale(0);
+        opacity: 0;
+      }
+      60% {
+        transform: translate3d(-50%, 0, 0) scale(1.06);
+        opacity: 1;
+      }
+      82% {
+        transform: translate3d(-50%, 0, 0) scale(0.98);
+      }
+      100% {
+        transform: translate3d(-50%, 0, 0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* 팝업: answer SVG (1079×615) 화면 하단 */
+    #popup-layer {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1079px;
+      height: 615px;
+      z-index: 300;
+      display: none;
+      pointer-events: none; /* 클릭 오버레이로 통과 → 닫기 동작 */
+    }
+    #popup-layer.show {
+      display: block;
+      animation: popupSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    #popup-layer img {
+      width: 1079px; height: 615px;
+      display: block;
+    }
+
+    /* 팝업 원형 아이콘: X축 가운데 정렬, Y: 1632.2 (3px 위로 이동) */
+    #popup-circle-icon {
+      position: absolute;
+      top: 1632.2px;
+      left: 50%;
+      transform: translate3d(-50%, 0, 0) scale(0);
+      transform-origin: center center;
+      width: 266px;
+      height: 266px;
+      z-index: 310;
+      display: none;
+      pointer-events: none;
+      /* GPU 하드웨어 가속 레이어 생성 -> SVG 내부 drop shadow 필터 렌더링 딜레이 해결 */
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    #popup-circle-icon.bboing {
+      display: block;
+      animation: bboingPop 0.4s cubic-bezier(0.25, 1, 0.5, 1) 0.1s forwards;
+    }
+
+    /* 활성 요소: 오버레이 위로 */
+    .quiz-active {
+      z-index: 300 !important;
+      cursor: default;
+    }
+
+    /* 정답 맞춘 요소: 모션 정지, 흑백 처리 및 클릭 비활성화 */
+    .solved {
+      filter: grayscale(100%) !important;
+      animation: none !important;
+      pointer-events: none !important;
+      cursor: default !important;
+    }
+    .solved #marquee-track {
+      animation: none !important;
+    }
+    .solved.pulse {
+      animation: none !important;
+    }
+
+    /* 컨패티 캔버스: 팝업 뒤(z-index: 250), 오버레이 위 */
+    #confetti-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+      z-index: 250;
+      pointer-events: none;
+      display: none;
+    }
+
+    /* ══ 축하(Congratulation) 팝업 ══ */
+    #congratulation-wrap {
+      position: absolute;
+      top: 516.93px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      width: 799px;
+      height: 866px;
+      z-index: 300;
+      display: none;
+      opacity: 0;
+      pointer-events: auto;
+    }
+    #congratulation-wrap.show {
+      display: block;
+      animation: congratsPop 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes congratsPop {
+      0%   { transform: translateX(-50%) scale(0.85); opacity: 0; }
+      60%  { transform: translateX(-50%) scale(1.03); opacity: 1; }
+      100% { transform: translateX(-50%) scale(1); opacity: 1; }
+    }
+    #congratulation-img {
+      width: 799px;
+      height: 866px;
+      display: block;
+    }
+
+    /* Next 버튼 (X축 가운데 정렬, Y: 1127.18 -> 팝업 기준 top: 610.25px) */
+    #btn-next {
+      position: absolute;
+      top: 610.25px; /* 1127.18 - 516.93 */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 553px;
+      height: 119px;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      outline: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), filter 0.1s ease;
+    }
+    #btn-next img {
+      width: 553px;
+      height: 119px;
+      display: block;
+    }
+    /* 버튼 누를 때 쫀득한 프레스 모션 */
+    #btn-next:active {
+      transform: translateX(-50%) translateY(4px) scale(0.97);
+      filter: brightness(0.95);
+    }
+  </style>
+</head>
+<body>
+<div id="scene">
+  <!-- 고정 영역 -->
+  <div id="fixed-zone">
+    <img id="quiz-header" src="asset/quiz_header.svg" alt="Quiz Header" />
+    <img id="progress-bar" src="asset/progress_bar_0.svg" alt="진행도" />
+  </div>
+  <!-- 스크롤 영역 -->
+  <div id="scroll-zone">
+    <div id="scroll-content">
+      <!-- 쇼핑몰 -->
+      <img id="shopping-mall" src="asset/shopping_mall.svg" alt="쇼핑몰" />
+      <!-- 대형 배너: 캔버스 Y:778.19 -->
+      <img id="large-banner" src="asset/shopping_mall_large_banner.svg" alt="대형 배너" />
+      <!-- discount_deal: 캔버스 X:758.67 Y:1868.87 / 둥실 모션 -->
+      <img id="discount-deal" src="asset/discount_deal.svg" alt="89% 할인" />
+      <!-- sold_out_soon: 캔버스 X:70.19 Y:2416.5 -->
+      <div id="sold-out-wrapper">
+        <img id="sold-out-soon" src="asset/sold_out_soon.svg" alt="품절임박" />
+        <span id="countdown-text">5개 남음</span>
+      </div>
+      <!-- discount_timer: 캔버스 X:582.14 Y:2362.87 -->
+      <div id="timer-wrapper">
+        <img id="discount-timer" src="asset/discount_timer.svg" alt="할인 타이머" />
+        <span class="timer-digit" id="timer-min">00</span>
+        <span class="timer-digit" id="timer-sec">59</span>
+        <span class="timer-digit" id="timer-cs">00</span>
+      </div>
+    </div>
+  </div>
+  <!-- 마키 배너: scroll-zone 밖, 절대 고정 레이어 -->
+  <div id="marquee-wrapper">
+    <div id="marquee-track">
+      <img src="asset/shopping_mall_marquee_banner.svg" alt="마키 배너" />
+      <img src="asset/shopping_mall_marquee_banner.svg" alt="마키 배너 복제" />
+    </div>
+  </div>
+  <!-- 오버레이 -->
+  <div id="overlay"></div>
+  <!-- 정답 팝업 -->
+  <div id="popup-layer">
+    <img id="popup-img" src="" alt="정답 팝업" />
+  </div>
+  <!-- 팝업 원형 아이콘 (X축 가운데, Y: 1632.2) -->
+  <img id="popup-circle-icon" src="" alt="원형 아이콘" />
+
+  <!-- ══ 축하 컨패티 캔버스 (팝업 뒤 레이어 z-index: 250) ══ -->
+  <canvas id="confetti-canvas" width="1080" height="1920"></canvas>
+
+  <!-- ══ 축하(Congratulation) 팝업 (X축 가운데, Y: 516.93) ══ -->
+  <div id="congratulation-wrap">
+    <img id="congratulation-img" src="asset/congratulation.svg" alt="축하 팝업" />
+    <button id="btn-next" type="button">
+      <img src="asset/next.svg" alt="다음" />
+    </button>
+  </div>
+</div>
+<script>
+  const CANVAS_W = 1080, CANVAS_H = 1920;
+  const scene = document.getElementById('scene');
+  function fitScene() {
+    const scale = Math.min(window.innerWidth / CANVAS_W, window.innerHeight / CANVAS_H);
+    scene.style.transform = `scale(${scale})`;
+  }
+  window.addEventListener('resize', fitScene);
+  fitScene();
+
+  /* 품절임박 카운트다운: 5→4→3→2→1→5→... 2초 간격 무한 반복 */
+  let soldCount = 5;
+  const countdownEl = document.getElementById('countdown-text');
+
+  function tickSoldOut() {
+    const wrapper = document.getElementById('sold-out-wrapper');
+    if (wrapper.classList.contains('solved')) return; // 팝업 닫힌 후 정지
+
+    soldCount--;
+    if (soldCount < 1) soldCount = 5;   // 1 다음에 5로 리셋
+    countdownEl.textContent = soldCount + '개 남음';
+
+    // 콩닥콩닥 모션: 클래스 제거 → 리플로우 → 다시 추가로 재생
+    wrapper.classList.remove('pulse');
+    void wrapper.offsetWidth; // reflow 강제
+    wrapper.classList.add('pulse');
+
+    setTimeout(tickSoldOut, 2000);
+  }
+
+  // 첫 감소는 2초 후 시작
+  setTimeout(tickSoldOut, 2000);
+  /* 할인 타이머: 00:59:00 에서 카운트다운, 0 도달 시 00:59:00 로 리셋 반복 */
+  let tMin = 0, tSec = 59, tCs = 0;
+  const elMin = document.getElementById('timer-min');
+  const elSec = document.getElementById('timer-sec');
+  const elCs  = document.getElementById('timer-cs');
+
+  let lastTime = performance.now();
+  function tickTimer(now) {
+    const timerWrap = document.getElementById('timer-wrapper');
+    if (timerWrap.classList.contains('solved')) return; // 팝업 닫힌 후 정지
+
+    let dt = now - lastTime;
+    if (dt >= 10) {
+      let drops = Math.floor(dt / 10);
+      lastTime = now - (dt % 10);
+
+      tCs -= drops;
+      while (tCs < 0) {
+        tCs += 100;
+        tSec--;
+        if (tSec < 0) {
+          tSec = 59;
+          tMin--;
+          if (tMin < 0) {          // 00:00:00 도달 → 리셋
+            tMin = 0; tSec = 59; tCs = 0;
+            break;
+          }
+        }
+      }
+      elMin.textContent = String(tMin).padStart(2, '0');
+      elSec.textContent = String(tSec).padStart(2, '0');
+      elCs.textContent  = String(tCs).padStart(2, '0');
+    }
+    requestAnimationFrame(tickTimer);
+  }
+
+  requestAnimationFrame(tickTimer);
+
+  /* ══ 퀴즈 인터랙션 ══ */
+  const overlay         = document.getElementById('overlay');
+  const popupLayer      = document.getElementById('popup-layer');
+  const popupImg        = document.getElementById('popup-img');
+  const popupCircleIcon = document.getElementById('popup-circle-icon');
+  const scrollZone      = document.getElementById('scroll-zone');
+  const progressBar     = document.getElementById('progress-bar');
+
+  // [요소 ID] → { popup: answer SVG, icon: circle_icon SVG }
+  const quizMap = {
+    'timer-wrapper':    { popup: 'asset/answer_timer.svg',    icon: 'asset/circle_icon_timer.svg' },
+    'discount-deal':    { popup: 'asset/answer_discount.svg', icon: 'asset/circle_icon_discount.svg' },
+    'sold-out-wrapper': { popup: 'asset/answer_cart.svg',     icon: 'asset/circle_icon_cart.svg' },
+    'marquee-wrapper':  { popup: 'asset/answer_scissors.svg', icon: 'asset/circle_icon_scissors.svg' },
+    'large-banner':     { popup: 'asset/answer_gift.svg',     icon: 'asset/circle_icon_gift.svg' },
+  };
+
+  const foundItems = new Set();
+  let activeId = null;
+
+  function updateProgressBar(count) {
+    if (count === 0) {
+      progressBar.src = 'asset/progress_bar_0.svg';
+      progressBar.style.left = '86.2px';
+      progressBar.style.top = '386.93px';
+      progressBar.style.width = '908px';
+      progressBar.style.height = '13px';
+    } else if (count >= 1 && count <= 4) {
+      progressBar.src = `asset/progress_bar_${count}.svg`;
+      // SVG 내 글로우 패딩(11.1px) 보정 -> 내부 바 위치를 86.2px, 386.93px로 완전 일치
+      progressBar.style.left = '75.1px';
+      progressBar.style.top = '375.83px';
+      progressBar.style.width = '919px';
+      progressBar.style.height = '36px';
+    } else if (count >= 5) {
+      progressBar.src = 'asset/progress_bar_5.svg';
+      progressBar.style.left = '75.1px';
+      progressBar.style.top = '375.83px';
+      progressBar.style.width = '930px';
+      progressBar.style.height = '36px';
+    }
+  }
+
+  /* ── 사운드 효과 ── */
+  const clickSfx = new Audio('sound/click_sfx.mp3');
+  clickSfx.preload = 'auto';
+
+  const correctSfx = new Audio('sound/correct_sfx.mp3');
+  correctSfx.preload = 'auto';
+
+  function playClick() {
+    clickSfx.currentTime = 0;
+    clickSfx.play().catch(() => {});
+  }
+
+  function playCorrect() {
+    correctSfx.currentTime = 0;
+    correctSfx.play().catch(() => {});
+  }
+
+  function showPopup(id) {
+    // 이전 활성 요소 해제
+    if (activeId) {
+      const prevEl = document.getElementById(activeId);
+      prevEl.classList.remove('quiz-active');
+      prevEl.classList.add('solved');
+    }
+
+    activeId = id;
+    const el = document.getElementById(id);
+    el.classList.add('quiz-active');
+
+    // ── 정답 진행바 업데이트 (신규 발견 시) ──
+    if (!foundItems.has(id)) {
+      foundItems.add(id);
+      updateProgressBar(foundItems.size);
+    }
+
+    // ── 팝업과 겹치면 자동 스크롤 ──
+    // 팝업 상단 위치 (씬 좌표 기준): 1920 - 615 = 1305px, 여유 30px
+    const POPUP_TOP = CANVAS_H - 615 - 30; // 1275px
+    const sceneRect = scene.getBoundingClientRect();
+    const scale     = sceneRect.width / CANVAS_W;
+    const elBottom  = el.getBoundingClientRect().bottom;
+    const elBottomInScene = (elBottom - sceneRect.top) / scale;
+
+    if (elBottomInScene > POPUP_TOP) {
+      // 요소 하단이 팝업 영역에 걸림 → scrollTop 올려서 요소를 팝업 위로
+      scrollZone.scrollTop += (elBottomInScene - POPUP_TOP);
+    }
+
+    // 오버레이 표시
+    overlay.style.display = 'block';
+
+    // 팝업 슬라이드업 모션 트리거
+    popupImg.src = quizMap[id].popup;
+    popupLayer.classList.remove('show');
+    void popupLayer.offsetWidth; // reflow 강제
+    popupLayer.classList.add('show');
+
+    // 원형 아이콘 뽀잉 모션 트리거
+    popupCircleIcon.src = quizMap[id].icon;
+    popupCircleIcon.classList.remove('bboing');
+    void popupCircleIcon.offsetWidth; // reflow 강제
+    popupCircleIcon.classList.add('bboing');
+
+    // 정답 사운드 효과음 재생
+    playCorrect();
+
+    // 스크롤 잠금
+    scrollZone.style.overflowY = 'hidden';
+  }
+
+  function closePopup() {
+    if (!activeId) return;
+    const el = document.getElementById(activeId);
+    el.classList.remove('quiz-active');
+    // 팝업을 닫고 나온 이후 모션 정지 및 흑백 처리 적용
+    el.classList.add('solved');
+    activeId = null;
+
+    overlay.style.display = 'none';
+    popupLayer.classList.remove('show');
+    popupCircleIcon.classList.remove('bboing');
+
+    // 스크롤 잠금 해제
+    scrollZone.style.overflowY = 'auto';
+
+    // ── 5번째 요소까지 모두 맞춘 경우 → 쇼핑몰 화면으로 잠시 돌아간 뒤 축하 팝업 등장 ──
+    if (foundItems.size >= 5) {
+      setTimeout(() => {
+        showCongratulation();
+      }, 400); // 0.4초 딜레이 후 축하 팝업
+    }
+  }
+
+  /* ══ 축하(Congratulation) 팝업 & 컨패티 파티클 시스템 ══ */
+  const congratsWrap   = document.getElementById('congratulation-wrap');
+  const btnNext        = document.getElementById('btn-next');
+  const confettiCanvas = document.getElementById('confetti-canvas');
+  const confettiCtx    = confettiCanvas.getContext('2d');
+  let confettiParticles = [];
+  let confettiAnimId    = null;
+
+  const CONFETTI_COLORS = [
+    '#35D047', '#0E9D2D', '#4CEE5F', // 지구저구 그린
+    '#FF66B6', '#FFD7EC', '#FF1493', // 핑크
+    '#FFC25F', '#FFA500', '#FFD700', // 옐로우/골드
+    '#407AB9', '#60A5FA', '#38BDF8', // 블루
+    '#FFFFFF'                         // 화이트
+  ];
+
+  class ConfettiParticle {
+    constructor(originX, originY) {
+      this.x = originX + (Math.random() * 260 - 130);
+      this.y = originY + (Math.random() * 100 - 50);
+
+      // 상단 및 양옆으로 팡 터져나가는 속도
+      const angle = (Math.PI * 1.5) + (Math.random() * 1.6 - 0.8);
+      const speed = 22 + Math.random() * 26;
+      this.vx = Math.cos(angle) * speed + (Math.random() * 16 - 8);
+      this.vy = Math.sin(angle) * speed - (10 + Math.random() * 14);
+
+      this.gravity = 0.65 + Math.random() * 0.3;
+      this.friction = 0.965;
+
+      this.color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+      this.type  = Math.floor(Math.random() * 3); // 0: 리본, 1: 원형 도트, 2: 별/다이아
+
+      this.size   = 18 + Math.random() * 18;
+      this.aspect = 0.35 + Math.random() * 0.5;
+
+      this.rotation  = Math.random() * Math.PI * 2;
+      this.rotSpeed  = (Math.random() * 0.16 - 0.08);
+
+      this.flip      = Math.random() * Math.PI;
+      this.flipSpeed = 0.09 + Math.random() * 0.14;
+
+      this.opacity   = 1;
+      this.fadeSpeed = 0.004 + Math.random() * 0.006;
+      this.life      = 1;
+    }
+
+    update() {
+      this.vx *= this.friction;
+      this.vy *= this.friction;
+      this.vy += this.gravity;
+
+      this.x += this.vx;
+      this.y += this.vy;
+
+      this.rotation += this.rotSpeed;
+      this.flip += this.flipSpeed;
+
+      // 하강 시작 후 페이드아웃
+      if (this.vy > 3) {
+        this.life -= this.fadeSpeed * 2;
+        this.opacity = Math.max(0, this.life);
+      }
+    }
+
+    draw(ctx) {
+      if (this.opacity <= 0) return;
+
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rotation);
+      ctx.scale(1, Math.cos(this.flip)); // 3D 회전 텀블링
+      ctx.globalAlpha = this.opacity;
+      ctx.fillStyle   = this.color;
+
+      if (this.type === 0) {
+        // 직사각형 리본 조각
+        ctx.fillRect(-this.size / 2, (-this.size * this.aspect) / 2, this.size, this.size * this.aspect);
+      } else if (this.type === 1) {
+        // 원형 도트
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 0.38, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // 다이아몬드 / 별 조각
+        ctx.beginPath();
+        ctx.moveTo(0, -this.size * 0.55);
+        ctx.lineTo(this.size * 0.45, 0);
+        ctx.lineTo(0, this.size * 0.55);
+        ctx.lineTo(-this.size * 0.45, 0);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  function launchConfetti() {
+    confettiCanvas.style.display = 'block';
+    confettiParticles = [];
+
+    // 팝업 뒤쪽 상단에서 160개 파티클 동시 폭발
+    for (let i = 0; i < 160; i++) {
+      confettiParticles.push(new ConfettiParticle(540, 750));
+    }
+
+    if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+
+    function render() {
+      confettiCtx.clearRect(0, 0, 1080, 1920);
+      let aliveCount = 0;
+
+      for (let p of confettiParticles) {
+        p.update();
+        p.draw(confettiCtx);
+        if (p.opacity > 0 && p.y < 1950) aliveCount++;
+      }
+
+      if (aliveCount > 0) {
+        confettiAnimId = requestAnimationFrame(render);
+      } else {
+        confettiCanvas.style.display = 'none';
+        confettiCtx.clearRect(0, 0, 1080, 1920);
+      }
+    }
+
+    render();
+  }
+
+  function showCongratulation() {
+    overlay.style.display = 'block';
+    congratsWrap.classList.remove('show');
+    void congratsWrap.offsetWidth; // reflow 강제
+    congratsWrap.classList.add('show');
+
+    // 팝업 뒤쪽에서 컨패티 팡 폭발!
+    launchConfetti();
+
+    // 스크롤 잠금
+    scrollZone.style.overflowY = 'hidden';
+
+    // 축하 효과음 재생
+    playCorrect();
+  }
+
+  const handleBtnNext = (e) => {
+    e.stopPropagation();
+    if (e.type === 'touchend') e.preventDefault();
+    playClick();
+    setTimeout(() => {
+      window.location.href = '../road/scene3.html';
+    }, 100);
+  };
+  btnNext.addEventListener('click', handleBtnNext);
+  btnNext.addEventListener('touchend', handleBtnNext);
+
+  // 화면 터치/클릭 시 즉각적인 click_sfx 재생
+  scene.addEventListener('pointerdown', () => {
+    playClick();
+  });
+
+  // ── discount_deal 스티키 플로팅 로직 (화면 Y: 1001px 도달 시 고정) ──
+  const discountDealEl   = document.getElementById('discount-deal');
+  const STICKY_THRESHOLD = 867.87; // 1868.87 - 1001.0
+  const INITIAL_TOP      = 1279.4;  // 1868.87 - 589.47
+  const STICKY_OFFSET    = 411.53;  // 1001.0 - 589.47
+
+  function updateDiscountDealPosition() {
+    if (scrollZone.scrollTop >= STICKY_THRESHOLD) {
+      discountDealEl.style.top = (scrollZone.scrollTop + STICKY_OFFSET) + 'px';
+    } else {
+      discountDealEl.style.top = INITIAL_TOP + 'px';
+    }
+  }
+
+  scrollZone.addEventListener('scroll', updateDiscountDealPosition);
+
+  // 각 요소 클릭 핸들러
+  Object.keys(quizMap).forEach(id => {
+    const targetEl = document.getElementById(id);
+    targetEl.addEventListener('click', e => {
+      e.stopPropagation();
+      // 이미 맞추고 흑백이 된 요소는 클릭 불가
+      if (targetEl.classList.contains('solved')) return;
+
+      if (activeId === id) {
+        closePopup();        // 같은 요소 재클릭 → 닫기
+      } else {
+        showPopup(id);       // 다른 요소 클릭 → 해당 팝업
+      }
+    });
+  });
+
+  // 오버레이 클릭 → 일반 퀴즈 팝업 닫기 (축하 팝업이 아닐 때)
+  overlay.addEventListener('click', () => {
+    if (activeId) {
+      closePopup();
+    }
+  });
+</script>
+
+<!-- GLOBAL BACK BUTTON & POPUP -->
+<script>
+(function() {
+    function initBackBtn() {
+        if (document.getElementById('globalBackBtnContainer')) return; // already injected
+
+        const container = document.querySelector('.game-container') || 
+                          document.querySelector('.screen-container') || 
+                          document.querySelector('#scene') || 
+                          document.body;
+
+        const backBtnContainer = document.createElement('div');
+        backBtnContainer.id = 'globalBackBtnContainer';
+        backBtnContainer.style.cssText = 'position: absolute; top: 40px; left: 40px; z-index: 9999;';
+        
+        const backBtn = document.createElement('img');
+        backBtn.src = '../back_assets/bt-back.svg';
+        backBtn.alt = '뒤로가기';
+        backBtn.style.cssText = 'width: 131px; height: 132px; cursor: pointer; pointer-events: auto;';
+        backBtnContainer.appendChild(backBtn);
+
+        const popupOverlay = document.createElement('div');
+        popupOverlay.id = 'globalBackPopup';
+        popupOverlay.style.cssText = 'position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; background: rgba(0, 0, 0, 0.6); z-index: 10000; display: none; justify-content: center; align-items: center; pointer-events: auto;';
+
+        const popupContent = document.createElement('div');
+        popupContent.style.cssText = 'position: relative; display: flex; justify-content: center; align-items: center;';
+        
+        const popupBg = document.createElement('img');
+        popupBg.src = '../back_assets/view-main.svg';
+        popupBg.alt = '메인 팝업';
+        popupBg.style.cssText = 'width: 799px; height: 863px;';
+        
+        const popupButtons = document.createElement('div');
+        popupButtons.style.cssText = 'position: absolute; display: flex; flex-direction: column; align-items: center; top: 76%; transform: translateY(-50%);';
+        
+        const mainBtn = document.createElement('img');
+        mainBtn.src = '../back_assets/view-main-bt.svg';
+        mainBtn.alt = '메인화면으로';
+        mainBtn.style.cssText = 'width: 553px; height: 119px; cursor: pointer; margin-top: -40px; margin-bottom: 60px; pointer-events: auto;';
+        
+        const closeText = document.createElement('div');
+        closeText.textContent = '닫기';
+        closeText.style.cssText = 'color: #35D047; font-size: 50px; font-weight: bold; cursor: pointer; text-align: center; padding: 10px; pointer-events: auto;';
+
+        popupButtons.appendChild(mainBtn);
+        popupButtons.appendChild(closeText);
+        popupContent.appendChild(popupBg);
+        popupContent.appendChild(popupButtons);
+        popupOverlay.appendChild(popupContent);
+        
+        container.appendChild(backBtnContainer);
+        container.appendChild(popupOverlay);
+
+        const applyFeedback = (el) => {
+            el.style.transition = 'transform 0.1s, opacity 0.1s';
+            const press = () => { el.style.transform = 'scale(0.90)'; el.style.opacity = '0.6'; };
+            const release = () => { el.style.transform = 'scale(1)'; el.style.opacity = '1'; };
+            el.addEventListener('touchstart', press, {passive: true});
+            el.addEventListener('touchend', release);
+            el.addEventListener('mousedown', press);
+            el.addEventListener('mouseup', release);
+            el.addEventListener('mouseleave', release);
+        };
+        applyFeedback(backBtn);
+        applyFeedback(mainBtn);
+        applyFeedback(closeText);
+
+        const handleTouch = (e, callback) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Restore visual state immediately in case touchend didn't fire due to navigation/display change
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.opacity = '1';
+            callback();
+        };
+
+        const openPopup = () => { 
+            if (backBtnContainer.style.display !== 'none') {
+                popupOverlay.style.display = 'flex'; 
+            }
+        };
+        const closePopup = () => { popupOverlay.style.display = 'none'; };
+        const goMain = () => { 
+            localStorage.removeItem('quiz1_solved_answers');
+            window.location.href = '../index.html'; 
+        };
+
+        backBtn.addEventListener('touchend', (e) => handleTouch(e, openPopup));
+        backBtn.addEventListener('click', (e) => handleTouch(e, openPopup));
+        
+        closeText.addEventListener('touchend', (e) => handleTouch(e, closePopup));
+        closeText.addEventListener('click', (e) => handleTouch(e, closePopup));
+        
+        mainBtn.addEventListener('touchend', (e) => handleTouch(e, goMain));
+        mainBtn.addEventListener('click', (e) => handleTouch(e, goMain));
+
+        // --- HIDE CONDITIONS LOGIC ---
+        const currentPath = window.location.pathname;
+        const isScene1 = currentPath.includes('road/scene1.html');
+        const isScene2 = currentPath.includes('road/scene2.html');
+        const isQuiz2Screen1 = currentPath.includes('quiz2/screen1.html');
+
+                const updateVisibility = () => {
+            let isVisible = true;
+            
+            if (isScene1) {
+                const signBubble = document.getElementById('signBubble');
+                const background = document.querySelector('.background');
+                const hasStarted = (signBubble && signBubble.style.display === 'block') || 
+                                   (background && background.classList.contains('hide-logo'));
+                                   
+                const bigJeogu1 = document.getElementById('bigJeogu1');
+                const bigJeogu2 = document.getElementById('bigJeogu2');
+                const quizScreen = document.getElementById('quizScreen');
+                const hasEnded = (bigJeogu1 && bigJeogu1.style.display === 'block') || 
+                                 (bigJeogu2 && bigJeogu2.style.display === 'block') ||
+                                 (quizScreen && quizScreen.classList.contains('active'));
+                                 
+                if (!hasStarted || hasEnded) {
+                    isVisible = false;
+                }
+            } else if (isScene2) {
+                const bigJeogu1 = document.getElementById('bigJeogu1');
+                const bigJeogu2 = document.getElementById('bigJeogu2');
+                const quizScreen = document.getElementById('quizScreen');
+                const hasEnded = (bigJeogu1 && bigJeogu1.style.display === 'block') || 
+                                 (bigJeogu2 && bigJeogu2.style.display === 'block') ||
+                                 (quizScreen && quizScreen.classList.contains('active'));
+                
+                if (hasEnded) {
+                    isVisible = false;
+                }
+            } else if (isQuiz2Screen1) {
+                const quizCard = document.getElementById('quiz-card');
+                if (quizCard && quizCard.style.display === 'block') {
+                    isVisible = false;
+                }
+            }
+            
+            backBtnContainer.style.display = isVisible ? 'block' : 'none';
+        };
+
+        updateVisibility();
+
+        if (isScene1 || isScene2 || isQuiz2Screen1) {
+            const observer = new MutationObserver(() => {
+                updateVisibility();
+            });
+            const config = { attributes: true, attributeFilter: ['style', 'class'] };
+            
+            if (isScene1) {
+                const els = [document.getElementById('signBubble'), document.querySelector('.background'), document.getElementById('bigJeogu1'), document.getElementById('bigJeogu2'), document.getElementById('quizScreen')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            } else if (isScene2) {
+                const els = [document.getElementById('bigJeogu1'), document.getElementById('bigJeogu2'), document.getElementById('quizScreen')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            } else if (isQuiz2Screen1) {
+                const els = [document.getElementById('quiz-card')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            }
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBackBtn);
+    } else {
+        initBackBtn();
+    }
+})();
+</script>
+
+</body>
+</html>

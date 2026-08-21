@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <style>html, body { background-color: #000 !important; }</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>화면 1 - 16:9 세로 운송 게임</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="game-container" id="gameContainer">
+      <!-- Background SVG -->
+      <div class="game-bg">
+        <img src="assets/backgrond1.svg" alt="화면 1 배경" class="bg-img">
+      </div>
+
+      <!-- Main Text Area -->
+      <div class="game-text-container">
+        <div class="typing-text" id="typingText"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="screen1.js"></script>
+
+<!-- GLOBAL BACK BUTTON & POPUP -->
+<script>
+(function() {
+    function initBackBtn() {
+        if (document.getElementById('globalBackBtnContainer')) return; // already injected
+
+        const container = document.querySelector('.game-container') || 
+                          document.querySelector('.screen-container') || 
+                          document.querySelector('#scene') || 
+                          document.body;
+
+        const backBtnContainer = document.createElement('div');
+        backBtnContainer.id = 'globalBackBtnContainer';
+        backBtnContainer.style.cssText = 'position: absolute; top: 40px; left: 40px; z-index: 9999;';
+        
+        const backBtn = document.createElement('img');
+        backBtn.src = '../back_assets/bt-back.svg';
+        backBtn.alt = '뒤로가기';
+        backBtn.style.cssText = 'width: 131px; height: 132px; cursor: pointer; pointer-events: auto;';
+        backBtnContainer.appendChild(backBtn);
+
+        const popupOverlay = document.createElement('div');
+        popupOverlay.id = 'globalBackPopup';
+        popupOverlay.style.cssText = 'position: absolute; top: 0; left: 0; width: 1080px; height: 1920px; background: rgba(0, 0, 0, 0.6); z-index: 10000; display: none; justify-content: center; align-items: center; pointer-events: auto;';
+
+        const popupContent = document.createElement('div');
+        popupContent.style.cssText = 'position: relative; display: flex; justify-content: center; align-items: center;';
+        
+        const popupBg = document.createElement('img');
+        popupBg.src = '../back_assets/view-main.svg';
+        popupBg.alt = '메인 팝업';
+        popupBg.style.cssText = 'width: 799px; height: 863px;';
+        
+        const popupButtons = document.createElement('div');
+        popupButtons.style.cssText = 'position: absolute; display: flex; flex-direction: column; align-items: center; top: 76%; transform: translateY(-50%);';
+        
+        const mainBtn = document.createElement('img');
+        mainBtn.src = '../back_assets/view-main-bt.svg';
+        mainBtn.alt = '메인화면으로';
+        mainBtn.style.cssText = 'width: 553px; height: 119px; cursor: pointer; margin-top: -40px; margin-bottom: 60px; pointer-events: auto;';
+        
+        const closeText = document.createElement('div');
+        closeText.textContent = '닫기';
+        closeText.style.cssText = 'color: #35D047; font-size: 50px; font-weight: bold; cursor: pointer; text-align: center; padding: 10px; pointer-events: auto;';
+
+        popupButtons.appendChild(mainBtn);
+        popupButtons.appendChild(closeText);
+        popupContent.appendChild(popupBg);
+        popupContent.appendChild(popupButtons);
+        popupOverlay.appendChild(popupContent);
+        
+        container.appendChild(backBtnContainer);
+        container.appendChild(popupOverlay);
+
+        const applyFeedback = (el) => {
+            el.style.transition = 'transform 0.1s, opacity 0.1s';
+            const press = () => { el.style.transform = 'scale(0.90)'; el.style.opacity = '0.6'; };
+            const release = () => { el.style.transform = 'scale(1)'; el.style.opacity = '1'; };
+            el.addEventListener('touchstart', press, {passive: true});
+            el.addEventListener('touchend', release);
+            el.addEventListener('mousedown', press);
+            el.addEventListener('mouseup', release);
+            el.addEventListener('mouseleave', release);
+        };
+        applyFeedback(backBtn);
+        applyFeedback(mainBtn);
+        applyFeedback(closeText);
+
+        const handleTouch = (e, callback) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Restore visual state immediately in case touchend didn't fire due to navigation/display change
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.opacity = '1';
+            callback();
+        };
+
+        const openPopup = () => { 
+            if (backBtnContainer.style.display !== 'none') {
+                popupOverlay.style.display = 'flex'; 
+            }
+        };
+        const closePopup = () => { popupOverlay.style.display = 'none'; };
+        const goMain = () => { 
+            localStorage.removeItem('quiz1_solved_answers');
+            window.location.href = '../index.html'; 
+        };
+
+        backBtn.addEventListener('touchend', (e) => handleTouch(e, openPopup));
+        backBtn.addEventListener('click', (e) => handleTouch(e, openPopup));
+        
+        closeText.addEventListener('touchend', (e) => handleTouch(e, closePopup));
+        closeText.addEventListener('click', (e) => handleTouch(e, closePopup));
+        
+        mainBtn.addEventListener('touchend', (e) => handleTouch(e, goMain));
+        mainBtn.addEventListener('click', (e) => handleTouch(e, goMain));
+
+        // --- HIDE CONDITIONS LOGIC ---
+        const currentPath = window.location.pathname;
+        const isScene1 = currentPath.includes('road/scene1.html');
+        const isScene2 = currentPath.includes('road/scene2.html');
+        const isQuiz2Screen1 = currentPath.includes('quiz2/screen1.html');
+
+                const updateVisibility = () => {
+            let isVisible = true;
+            
+            if (isScene1) {
+                const signBubble = document.getElementById('signBubble');
+                const background = document.querySelector('.background');
+                const hasStarted = (signBubble && signBubble.style.display === 'block') || 
+                                   (background && background.classList.contains('hide-logo'));
+                                   
+                const bigJeogu1 = document.getElementById('bigJeogu1');
+                const bigJeogu2 = document.getElementById('bigJeogu2');
+                const quizScreen = document.getElementById('quizScreen');
+                const hasEnded = (bigJeogu1 && bigJeogu1.style.display === 'block') || 
+                                 (bigJeogu2 && bigJeogu2.style.display === 'block') ||
+                                 (quizScreen && quizScreen.classList.contains('active'));
+                                 
+                if (!hasStarted || hasEnded) {
+                    isVisible = false;
+                }
+            } else if (isScene2) {
+                const bigJeogu1 = document.getElementById('bigJeogu1');
+                const bigJeogu2 = document.getElementById('bigJeogu2');
+                const quizScreen = document.getElementById('quizScreen');
+                const hasEnded = (bigJeogu1 && bigJeogu1.style.display === 'block') || 
+                                 (bigJeogu2 && bigJeogu2.style.display === 'block') ||
+                                 (quizScreen && quizScreen.classList.contains('active'));
+                
+                if (hasEnded) {
+                    isVisible = false;
+                }
+            } else if (isQuiz2Screen1) {
+                const quizCard = document.getElementById('quiz-card');
+                if (quizCard && quizCard.style.display === 'block') {
+                    isVisible = false;
+                }
+            }
+            
+            backBtnContainer.style.display = isVisible ? 'block' : 'none';
+        };
+
+        updateVisibility();
+
+        if (isScene1 || isScene2 || isQuiz2Screen1) {
+            const observer = new MutationObserver(() => {
+                updateVisibility();
+            });
+            const config = { attributes: true, attributeFilter: ['style', 'class'] };
+            
+            if (isScene1) {
+                const els = [document.getElementById('signBubble'), document.querySelector('.background'), document.getElementById('bigJeogu1'), document.getElementById('bigJeogu2'), document.getElementById('quizScreen')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            } else if (isScene2) {
+                const els = [document.getElementById('bigJeogu1'), document.getElementById('bigJeogu2'), document.getElementById('quizScreen')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            } else if (isQuiz2Screen1) {
+                const els = [document.getElementById('quiz-card')];
+                els.forEach(el => { if(el) observer.observe(el, config); });
+            }
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBackBtn);
+    } else {
+        initBackBtn();
+    }
+})();
+</script>
+
+</body>
+</html>

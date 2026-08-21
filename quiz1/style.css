@@ -1,0 +1,770 @@
+/* Style Design System for 16:9 Vertical Game Screen (1080px x 1920px) */
+:root {
+  --game-width: 1080px;
+  --game-height: 1920px;
+  --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  --text-color: #0F1811;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+  font-family: var(--font-family);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Wrapper to scale the container responsively while maintaining 9:16 vertical aspect ratio */
+.game-wrapper {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #111111;
+}
+
+/* 9:16 Vertical Game Stage (1080px x 1920px base) */
+.game-container {
+  position: relative;
+  width: var(--game-width);
+  height: var(--game-height);
+  aspect-ratio: 9 / 16;
+  background-color: transparent;
+  overflow: hidden;
+  transform-origin: center center;
+}
+
+/* Background image handling */
+.game-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.game-bg img.bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Main Text Container: Position X: 198.07px, Y: 226.39px */
+.game-text-container {
+  position: absolute;
+  left: 198.07px;
+  top: 226.39px;
+  width: 683.86px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Text styling: Pretendard SemiBold (600), size: 38pt (proportionally matched to background3.svg top text card), line-height: 140%, center-aligned */
+.typing-text {
+  font-family: var(--font-family);
+  font-weight: 600; /* Pretendard SemiBold */
+  font-size: 38pt;
+  line-height: 140%; /* line-height 140 */
+  color: var(--text-color);
+  letter-spacing: -0.02em;
+  white-space: pre;
+  word-break: keep-all;
+  text-align: center;
+}
+
+
+/* Specific styling for '15톤 운송' -> Pretendard ExtraBold */
+.typing-text .font-extrabold,
+.typing-text .font-black {
+  font-weight: 800; /* Pretendard ExtraBold */
+}
+
+/* Blinking typing cursor caret */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background-color: var(--text-color);
+  margin-left: 2px;
+  vertical-align: sub;
+  animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Screen 3 CO2 Pulse Animation Container (Positioned at CO2 pin center: X 57.305%, Y 59.574%) */
+.co2-pulse-box {
+  position: absolute;
+  left: 57.305%;
+  top: 59.574%;
+  width: 0;
+  height: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Topmost CO2 Pin Icon (centered exactly over background pin) */
+.co2-top-pin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 420px;
+  height: 420px;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  display: block;
+}
+
+/* Screen 3 Top Question Prompt Overlay (Overlaid 100% over background top card) */
+.question-prompt-overlay {
+  position: absolute;
+  left: 139.5px;
+  top: 101px;
+  width: 801px;
+  height: 380px;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  animation: cardDrop 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes cardDrop {
+  0%   { opacity: 0; transform: translateY(-450px) scale(0.95); }
+  55%  { opacity: 1; transform: translateY(18px) scale(1.02); }
+  72%  { transform: translateY(-8px) scale(0.99); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Alternating Reversible Dual Pulse Circles (Ping-Pong Expanding & Contracting Loop) */
+.blue-circle-1 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 440px;
+  height: 440px;
+  transform: translate3d(-50%, -50%, 0);
+  z-index: 2;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: reversePulseInner 2.2s infinite alternate cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+.blue-circle-2 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 530px;
+  height: 530px;
+  transform: translate3d(-50%, -50%, 0);
+  z-index: 1;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: reversePulseOuter 2.2s infinite alternate cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+/* Reversible Inner Dual Pulse Ring (Swells outward then smoothly contracts back) */
+@keyframes reversePulseInner {
+  0% {
+    transform: translate3d(-50%, -50%, 0) scale(0.85);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate3d(-50%, -50%, 0) scale(1.28);
+    opacity: 0.95;
+  }
+}
+
+/* Reversible Outer Dual Pulse Ring (Swells outward then smoothly contracts back in tandem) */
+@keyframes reversePulseOuter {
+  0% {
+    transform: translate3d(-50%, -50%, 0) scale(0.85);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translate3d(-50%, -50%, 0) scale(1.36);
+    opacity: 0.8;
+  }
+}
+
+/* ==========================================
+   Screen 4: Quiz Option Buttons & Result Popup
+   ========================================== */
+
+/* 4 Choice Buttons 2x2 Grid Container (Adjusted to top: 1310px) */
+.screen4-options-grid {
+  position: absolute;
+  left: 65px;
+  top: 1310px;
+  width: 950px;
+  height: 544px;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  column-gap: 55px;
+  row-gap: 40px;
+}
+
+/* ==========================================
+   Screen 4 Graphic Layers & Animations
+   ========================================== */
+
+/* 1. Base Background Sky */
+.bg-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: 1;
+}
+
+/* 2. Layer 2: Animated Clouds Group (Raised higher up to top: 70px) */
+.animated-clouds-group-wrapper {
+  position: absolute;
+  top: 70px;
+  left: 0;
+  width: 3200px;
+  height: auto;
+  z-index: 2;
+  pointer-events: none;
+  animation: moveCloudsGroup 35s linear infinite;
+}
+
+.clouds-group-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  will-change: transform;
+}
+
+@keyframes moveCloudsGroup {
+  0% {
+    transform: translateX(-2100px);
+  }
+  100% {
+    transform: translateX(1150px);
+  }
+}
+
+/* 3. Layer 3: Sky Gradation (Expanded to fill 100% screen width; transparent top fading down to ground) */
+.sky-gradation-wrapper {
+  position: absolute;
+  left: 0;
+  bottom: 785px;
+  width: 1080px;
+  height: 340px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.sky-gradation-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 4. Layer 4: Quiz Button & Title Text Group (quiz bt textGroup.svg) */
+.top-title-wrapper {
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  pointer-events: none;
+  width: 750px;
+  text-align: center;
+}
+
+.title-textgroup-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 5. Layer 5: Ground Layer (ground4.svg, ground5.svg, ground6.svg - Green/Rail/Water ground & Question banner) */
+.ground-wrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1080px;
+  height: auto;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.ground-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 6. Layer 6: Animated Vehicles (Truck / Train / Ship sitting flush right on top edge of ground) & CO2 Exhaust Puffs */
+.animated-truck-wrapper,
+.animated-vehicle-wrapper {
+  position: absolute;
+  left: 0;
+  z-index: 6;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Screen 4: Road Truck */
+.animated-truck-wrapper {
+  bottom: 785px;
+  animation: moveVehicleAcross 10.5s linear infinite;
+}
+
+/* Screen 5: Rail Train */
+.screen5-vehicle {
+  bottom: 785px;
+  animation: moveVehicleAcross 10s linear infinite;
+}
+
+/* Screen 6: Sea Ship */
+.screen6-vehicle {
+  bottom: 760px;
+  animation: moveVehicleAcross 12s linear infinite;
+}
+
+.truck-box,
+.vehicle-box {
+  position: relative;
+  display: inline-block;
+}
+
+.truck-box {
+  animation: vehicleJolt 0.35s ease-in-out infinite alternate;
+}
+
+.screen5-vehicle .vehicle-box {
+  animation: vehicleJolt 0.3s ease-in-out infinite alternate;
+}
+
+.screen6-vehicle .vehicle-box {
+  animation: shipFloating 2s ease-in-out infinite alternate;
+}
+
+.truck-img {
+  width: 370px;
+  height: auto;
+  display: block;
+}
+
+.train-img {
+  width: 380px;
+  height: auto;
+  display: block;
+}
+
+.ship-img {
+  width: 440px;
+  height: auto;
+  display: block;
+}
+
+@keyframes moveVehicleAcross {
+  0% {
+    transform: translateX(-500px);
+  }
+  100% {
+    transform: translateX(1150px);
+  }
+}
+
+@keyframes vehicleJolt {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-0.8deg);
+  }
+  100% {
+    transform: translateY(3px) rotate(0.8deg);
+  }
+}
+
+@keyframes shipFloating {
+  0% {
+    transform: translateY(0px) rotate(-1deg);
+  }
+  100% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+/* 7. CO2 Exhaust Emissions (3~4 Puffs Billowing Out) */
+.co2-exhaust-container {
+  position: absolute;
+  left: -70px;
+  bottom: 30px;
+  width: 140px;
+  height: 140px;
+  pointer-events: none;
+}
+
+.co2-puff {
+  position: absolute;
+  width: 75px;
+  height: 75px;
+  animation: puffCO2Emissions 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+  will-change: transform, opacity;
+}
+
+.puff-1 { animation-delay: 0s; }
+.puff-2 { animation-delay: 0.55s; }
+.puff-3 { animation-delay: 1.1s; }
+.puff-4 { animation-delay: 1.65s; }
+
+@keyframes puffCO2Emissions {
+  0% {
+    transform: translate(30px, 10px) scale(0.25);
+    opacity: 0.95;
+  }
+  35% {
+    transform: translate(-30px, -25px) scale(0.6);
+    opacity: 0.8;
+  }
+  70% {
+    transform: translate(-90px, -65px) scale(0.95);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate(-140px, -100px) scale(1.3);
+    opacity: 0;
+  }
+}
+
+
+/* Screen 7: Air Planes (Flying in smooth upward climbing curve trajectories) */
+.animated-plane-small-wrapper {
+  position: absolute;
+  left: 0;
+  bottom: 1380px;
+  z-index: 6;
+  pointer-events: none;
+  animation: flySmallPlaneLeft 7.5s linear infinite;
+  will-change: transform;
+}
+
+.animated-plane-big-wrapper {
+  position: absolute;
+  left: 0;
+  bottom: 1000px;
+  z-index: 6;
+  pointer-events: none;
+  animation: flyBigPlaneRight 6.5s linear infinite;
+  will-change: transform;
+}
+
+.plane-box {
+  position: relative;
+  display: inline-block;
+}
+
+.big-plane-img {
+  width: 390px;
+  height: auto;
+  display: block;
+}
+
+.small-plane-img {
+  width: 210px;
+  height: auto;
+  display: block;
+  transform: scaleX(-1); /* Facing Left */
+}
+
+/* Big Plane Flight Trajectory (Smooth Upward Curve to the Right) */
+@keyframes flyBigPlaneRight {
+  0% {
+    transform: translate(-450px, 140px) rotate(-6deg);
+  }
+  35% {
+    transform: translate(100px, 100px) rotate(-11deg);
+  }
+  70% {
+    transform: translate(650px, 0px) rotate(-19deg);
+  }
+  100% {
+    transform: translate(1180px, -180px) rotate(-26deg);
+  }
+}
+
+/* Small Plane Flight Trajectory (Smooth Upward Curve to the Left) */
+@keyframes flySmallPlaneLeft {
+  0% {
+    transform: translate(1180px, 140px) rotate(6deg);
+  }
+  35% {
+    transform: translate(650px, 100px) rotate(11deg);
+  }
+  70% {
+    transform: translate(100px, 0px) rotate(19deg);
+  }
+  100% {
+    transform: translate(-450px, -180px) rotate(26deg);
+  }
+}
+
+
+/* CO2 Exhaust for Small Plane (4 Staggered Puffs, Identical to Other Vehicles) */
+.small-plane-co2 {
+  position: absolute;
+  left: auto;
+  right: -45px;
+  bottom: 15px;
+  width: 100px;
+  height: 100px;
+  pointer-events: none;
+}
+
+.small-plane-co2 .co2-puff {
+  position: absolute;
+  width: 45px;
+  height: 45px;
+  animation: puffCO2EmissionsSmall 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+}
+
+.small-plane-co2 .puff-1 { animation-delay: 0s; }
+.small-plane-co2 .puff-2 { animation-delay: 0.55s; }
+.small-plane-co2 .puff-3 { animation-delay: 1.1s; }
+.small-plane-co2 .puff-4 { animation-delay: 1.65s; }
+
+@keyframes puffCO2EmissionsSmall {
+  0% {
+    transform: translate(-10px, 10px) scale(0.25);
+    opacity: 0.95;
+  }
+  35% {
+    transform: translate(30px, -20px) scale(0.6);
+    opacity: 0.8;
+  }
+  70% {
+    transform: translate(75px, -50px) scale(0.95);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate(115px, -80px) scale(1.3);
+    opacity: 0;
+  }
+}
+
+.big-plane-co2 {
+  left: -70px;
+  bottom: 25px;
+}
+
+
+
+
+
+
+/* Individual Choice Button Styling */
+.option-btn {
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+  width: 447px;
+  height: 252px;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 99999;
+  pointer-events: auto !important;
+}
+
+.option-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+/* Mouseover / Hover Opacity: 50% (Per User Directive) */
+.option-btn:hover {
+  opacity: 0.5;
+}
+
+.option-btn:active {
+  transform: scale(0.97);
+}
+
+/* Screen 4 Result Popup Modal Overlay */
+.popup-overlay-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.popup-overlay-wrapper.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.popup-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1080px;
+  height: auto;
+  cursor: pointer;
+  transform: translateY(0);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.popup-overlay-wrapper.hidden .popup-content {
+  transform: translateY(100%);
+}
+
+.popup-content img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ==========================================
+   Screen 7: Congratulation Overlay & Next Button
+   ========================================== */
+
+.congratulation-overlay-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 120;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#confetti-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 120;
+  display: none;
+}
+
+.congratulation-overlay-wrapper.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Center Congratulation SVG card relative to 1080x1920 screen */
+.congratulation-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 799px;
+  height: 866px;
+  z-index: 121;
+  pointer-events: none;
+}
+
+.congratulation-overlay-wrapper:not(.hidden) .congratulation-card {
+  animation: congratsPop 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes congratsPop {
+  0%   { transform: translate(-50%, -50%) scale(0.85); opacity: 0; }
+  60%  { transform: translate(-50%, -50%) scale(1.03); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.congratulation-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Next SVG Button positioned at X: 263.72px, Y: 1126.81px */
+.next-btn {
+  position: absolute;
+  left: 263.72px;
+  top: 1126.81px;
+  width: 553px;
+  height: 119px;
+  z-index: 122;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.next-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+.next-btn:hover {
+  opacity: 0.85;
+  transform: scale(1.02);
+}
+
+.next-btn:active {
+  transform: translateY(4px) scale(0.97);
+  filter: brightness(0.95);
+}
+
+
+
+
